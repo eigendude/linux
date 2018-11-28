@@ -240,6 +240,10 @@
 	baseboard_eeprom: baseboard_eeprom@50 {
 		compatible = "atmel,24c256";
 		reg = <0x50>;
+		wp-gpios = <&gpio3 18 0>;
+		wp-gpios = <&gpio1 3 0>;
+		wp = <&gpio1 3 0>;
+		write-protect = <&gpio1 3 0>;
 
 		#address-cells = <1>;
 		#size-cells = <1>;
