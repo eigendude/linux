@@ -253,44 +253,19 @@
 	status = "okay";
 	clock-frequency = <100000>;
 
-	cape_eeprom0: cape_eeprom0@54 {
+	powerboard_eeprom: powerboard_eeprom@50 {
 		compatible = "atmel,24c256";
-		reg = <0x54>;
+		reg = <0x50>;
 		#address-cells = <1>;
 		#size-cells = <1>;
-		cape0_data: cape_data@0 {
+		powerboard_data: powerboard_data@0 {
 			reg = <0 0x100>;
 		};
 	};
 
-	cape_eeprom1: cape_eeprom1@55 {
-		compatible = "atmel,24c256";
-		reg = <0x55>;
-		#address-cells = <1>;
-		#size-cells = <1>;
-		cape1_data: cape_data@0 {
-			reg = <0 0x100>;
-		};
-	};
-
-	cape_eeprom2: cape_eeprom2@56 {
-		compatible = "atmel,24c256";
-		reg = <0x56>;
-		#address-cells = <1>;
-		#size-cells = <1>;
-		cape2_data: cape_data@0 {
-			reg = <0 0x100>;
-		};
-	};
-
-	cape_eeprom3: cape_eeprom3@57 {
-		compatible = "atmel,24c256";
-		reg = <0x57>;
-		#address-cells = <1>;
-		#size-cells = <1>;
-		cape3_data: cape_data@0 {
-			reg = <0 0x100>;
-		};
+	powerboard_rtc: powerboard_rtc@68 {
+		compatible = "st,m41t82";
+		reg = <0x68>;
 	};
 };
 
