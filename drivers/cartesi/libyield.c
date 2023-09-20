@@ -18,10 +18,7 @@ static int _yield_validate(u64 dev, u64 cmd, u64 reason)
     if (reason != HTIF_YIELD_REASON_PROGRESS &&
         reason != HTIF_YIELD_REASON_RX_ACCEPTED &&
         reason != HTIF_YIELD_REASON_RX_REJECTED &&
-        reason != HTIF_YIELD_REASON_TX_VOUCHER &&
-        reason != HTIF_YIELD_REASON_TX_NOTICE &&
-        reason != HTIF_YIELD_REASON_TX_REPORT &&
-        reason != HTIF_YIELD_REASON_TX_EXCEPTION) {
+        reason != HTIF_YIELD_REASON_TX_OUTPUT) {
         return -EINVAL;
     }
 

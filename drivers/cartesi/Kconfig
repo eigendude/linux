@@ -17,7 +17,6 @@ config CARTESI_YIELD_DRIVER
 config CARTESI_ROLLUP_DRIVER
     bool "Cartesi Machine Rollup Device"
     depends on CARTESI_MACHINE
-    depends on CRYPTO_KECCAK
     default y
     help
         Cartesi Machine Rollup Device

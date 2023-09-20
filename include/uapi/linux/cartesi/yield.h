@@ -17,18 +17,21 @@ struct yield_request {
     __u32 data;
 };
 
-#define HTIF_DEVICE_YIELD   2
+#define HTIF_DEVICE_YIELD             2
 
-#define HTIF_YIELD_AUTOMATIC  0
-#define HTIF_YIELD_MANUAL    1
+#define HTIF_YIELD_AUTOMATIC          0
+#define HTIF_YIELD_MANUAL             1
 
-#define HTIF_YIELD_REASON_PROGRESS 0
+#define HTIF_YIELD_REASON_PROGRESS    0
+
+/* read as one of: */
+#define HTIF_YIELD_REASON_ADVANCE_STATE 0
+#define HTIF_YIELD_REASON_INSPECT_STATE 1
+
+/* write as one of: */
 #define HTIF_YIELD_REASON_RX_ACCEPTED 1
 #define HTIF_YIELD_REASON_RX_REJECTED 2
-#define HTIF_YIELD_REASON_TX_VOUCHER 3
-#define HTIF_YIELD_REASON_TX_NOTICE 4
-#define HTIF_YIELD_REASON_TX_REPORT 5
-#define HTIF_YIELD_REASON_TX_EXCEPTION 6
+#define HTIF_YIELD_REASON_TX_OUTPUT   3
 
 #define IOCTL_YIELD   _IOWR(0xd1, 0, struct yield_request)
 
