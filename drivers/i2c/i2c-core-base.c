@@ -1616,27 +1616,38 @@ static int __i2c_add_numbered_adapter(struct i2c_adapter *adap)
  */
 int i2c_add_adapter(struct i2c_adapter *adapter)
 {
-	struct device *dev = &adapter->dev;
-	int id;
+    struct device *dev = &adapter->dev;
+    int id;
 
-	if (dev->of_node) {
-		id = of_alias_get_id(dev->of_node, "i2c");
-		if (id >= 0) {
-			adapter->nr = id;
-			return __i2c_add_numbered_adapter(adapter);
-		}
-	}
+    pr_info("i2c_add_adapter: Adding adapter for device %s\n", dev_name(dev));
 
-	mutex_lock(&core_lock);
-	id = idr_alloc(&i2c_adapter_idr, adapter,
-		       __i2c_first_dynamic_bus_num, 0, GFP_KERNEL);
-	mutex_unlock(&core_lock);
-	if (WARN(id < 0, "couldn't get idr"))
-		return id;
+    if (dev->of_node) {
+        id = of_alias_get_id(dev->of_node, "i2c");
+        if (id >= 0) {
+            adapter->nr = id;
+            pr_info("i2c_add_adapter: Found alias ID %d for device %s\n", id, dev_name(dev));
+            return __i2c_add_numbered_adapter(adapter);
+        } else {
+            pr_warn("i2c_add_adapter: No alias ID found for device %s\n", dev_name(dev));
+        }
+    } else {
+        pr_warn("i2c_add_adapter: Device %s has no device tree node\n", dev_name(dev));
+    }
 
-	adapter->nr = id;
+    mutex_lock(&core_lock);
+    id = idr_alloc(&i2c_adapter_idr, adapter,
+                   __i2c_first_dynamic_bus_num, 0, GFP_KERNEL);
+    mutex_unlock(&core_lock);
 
-	return i2c_register_adapter(adapter);
+    if (WARN(id < 0, "couldn't get idr")) {
+        pr_err("i2c_add_adapter: Failed to allocate dynamic ID for device %s\n", dev_name(dev));
+        return id;
+    }
+
+    adapter->nr = id;
+    pr_info("i2c_add_adapter: Dynamically allocated ID %d for device %s\n", id, dev_name(dev));
+
+    return i2c_register_adapter(adapter);
 }
 EXPORT_SYMBOL(i2c_add_adapter);
 
@@ -1823,13 +1834,26 @@ EXPORT_SYMBOL_GPL(devm_i2c_add_adapter);
 
 static int i2c_dev_or_parent_fwnode_match(struct device *dev, const void *data)
 {
-	if (dev_fwnode(dev) == data)
-		return 1;
+    struct fwnode_handle *dev_fwnode = dev_fwnode(dev);
+    struct fwnode_handle *parent_fwnode = dev->parent ? dev_fwnode(dev->parent) : NULL;
 
-	if (dev->parent && dev_fwnode(dev->parent) == data)
-		return 1;
+    printk(KERN_ERR "i2c_dev_or_parent_fwnode_match: Checking device %s on bus %s\n", dev_name(dev), dev->bus ? dev->bus->name : "unknown");
 
-	return 0;
+    // Log the fwnode details
+    printk(KERN_ERR "i2c_dev_or_parent_fwnode_match: Device fwnode = %p, Parent fwnode = %p, Data = %p\n", dev_fwnode, parent_fwnode, data);
+
+    if (dev_fwnode == data) {
+        printk(KERN_ERR "i2c_dev_or_parent_fwnode_match: Match found for device %s on bus %s\n", dev_name(dev), dev->bus ? dev->bus->name : "unknown");
+        return 1;
+    }
+
+    if (parent_fwnode == data) {
+        printk(KERN_ERR "i2c_dev_or_parent_fwnode_match: Match found for parent of device %s on bus %s\n", dev_name(dev), dev->bus ? dev->bus->name : "unknown");
+        return 1;
+    }
+
+    printk(KERN_ERR "i2c_dev_or_parent_fwnode_match: No match for device %s or its parent on bus %s\n", dev_name(dev), dev->bus ? dev->bus->name : "unknown");
+    return 0;
 }
 
 /**
@@ -1843,22 +1867,35 @@ static int i2c_dev_or_parent_fwnode_match(struct device *dev, const void *data)
  */
 struct i2c_adapter *i2c_find_adapter_by_fwnode(struct fwnode_handle *fwnode)
 {
-	struct i2c_adapter *adapter;
-	struct device *dev;
+    struct i2c_adapter *adapter;
+    struct device *dev;
 
-	if (!fwnode)
-		return NULL;
+    printk(KERN_ERR "i2c_find_adapter_by_fwnode: Entering\n");
 
-	dev = bus_find_device(&i2c_bus_type, NULL, fwnode,
-			      i2c_dev_or_parent_fwnode_match);
-	if (!dev)
-		return NULL;
+    if (!fwnode) {
+        printk(KERN_ERR "i2c_find_adapter_by_fwnode: fwnode is NULL\n");
+        return NULL;
+    }
 
-	adapter = i2c_verify_adapter(dev);
-	if (!adapter)
-		put_device(dev);
+    // Print fwnode details
+    printk(KERN_ERR "i2c_find_adapter_by_fwnode: fwnode = %p\n", fwnode);
 
-	return adapter;
+    dev = bus_find_device(&i2c_bus_type, NULL, fwnode, i2c_dev_or_parent_fwnode_match);
+    if (!dev) {
+        printk(KERN_ERR "i2c_find_adapter_by_fwnode: bus_find_device returned NULL\n");
+        return NULL;
+    }
+
+    adapter = i2c_verify_adapter(dev);
+    if (!adapter) {
+        printk(KERN_ERR "i2c_find_adapter_by_fwnode: i2c_verify_adapter returned NULL\n");
+        put_device(dev);
+        return NULL;
+    }
+
+    printk(KERN_ERR "i2c_find_adapter_by_fwnode: Leaving\n");
+
+    return adapter;
 }
 EXPORT_SYMBOL(i2c_find_adapter_by_fwnode);
 

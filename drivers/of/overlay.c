@@ -918,42 +918,69 @@ static int of_overlay_apply(struct overlay_changeset *ovcs,
 {
 	int ret = 0, ret_revert, ret_tmp;
 
+	pr_info("of_overlay_apply: Starting overlay application for base node %s\n", base ? base->name : "NULL");
+
+	/* Step 1: Resolve phandles */
 	ret = of_resolve_phandles(ovcs->overlay_root);
-	if (ret)
+	if (ret) {
+		pr_err("of_overlay_apply: Failed to resolve phandles, error %d\n", ret);
 		goto out;
+	}
+	pr_info("of_overlay_apply: Phandles resolved successfully\n");
 
+	/* Step 2: Initialize the changeset */
 	ret = init_overlay_changeset(ovcs, base);
-	if (ret)
+	if (ret) {
+		pr_err("of_overlay_apply: Failed to initialize changeset, error %d\n", ret);
 		goto out;
+	}
+	pr_info("of_overlay_apply: Changeset initialized successfully\n");
 
+	/* Step 3: Pre-apply notification */
 	ret = overlay_notify(ovcs, OF_OVERLAY_PRE_APPLY);
-	if (ret)
+	if (ret) {
+		pr_err("of_overlay_apply: Pre-apply notification failed, error %d\n", ret);
 		goto out;
+	}
+	pr_info("of_overlay_apply: Pre-apply notification completed successfully\n");
 
+	/* Step 4: Build the changeset */
 	ret = build_changeset(ovcs);
-	if (ret)
+	if (ret) {
+		pr_err("of_overlay_apply: Failed to build changeset, error %d\n", ret);
 		goto out;
+	}
+	pr_info("of_overlay_apply: Changeset built successfully\n");
 
+	/* Step 5: Apply the changeset entries */
 	ret_revert = 0;
 	ret = __of_changeset_apply_entries(&ovcs->cset, &ret_revert);
 	if (ret) {
+		pr_err("of_overlay_apply: Failed to apply changeset entries, error %d\n", ret);
 		if (ret_revert) {
-			pr_debug("overlay changeset revert error %d\n",
-				 ret_revert);
+			pr_err("of_overlay_apply: Changeset revert failed, error %d\n", ret_revert);
 			devicetree_state_flags |= DTSF_APPLY_FAIL;
 		}
 		goto out;
 	}
+	pr_info("of_overlay_apply: Changeset entries applied successfully\n");
 
+	/* Step 6: Notify of applied changes */
 	ret = __of_changeset_apply_notify(&ovcs->cset);
 	if (ret)
-		pr_err("overlay apply changeset entry notify error %d\n", ret);
-	/* notify failure is not fatal, continue */
+		pr_err("of_overlay_apply: Apply changeset notify error %d\n", ret);
+	else
+		pr_info("of_overlay_apply: Changeset apply notify completed successfully\n");
 
+	/* Step 7: Post-apply notification */
 	ret_tmp = overlay_notify(ovcs, OF_OVERLAY_POST_APPLY);
-	if (ret_tmp)
+	if (ret_tmp) {
+		pr_err("of_overlay_apply: Post-apply notification failed, error %d\n", ret_tmp);
 		if (!ret)
 			ret = ret_tmp;
+	} else {
+		pr_info("of_overlay_apply: Post-apply notification completed successfully\n");
+	}
 
 out:
 	pr_debug("%s() err=%d\n", __func__, ret);
