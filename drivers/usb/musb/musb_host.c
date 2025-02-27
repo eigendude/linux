@@ -2333,8 +2333,11 @@ static int musb_cleanup_urb(struct urb *urb, struct musb_qh *qh)
 		if (is_dma_capable() && dma)
 			musb_platform_clear_ep_rxintr(musb, ep->epnum);
 	} else if (ep->epnum) {
-		musb_h_tx_flush_fifo(ep);
 		csr = musb_readw(epio, MUSB_TXCSR);
+		if (csr & MUSB_TXCSR_FIFONOTEMPTY) {
+			udelay(750);
+			musb_h_tx_flush_fifo(ep);
+		}
 		csr &= ~(MUSB_TXCSR_AUTOSET
 			| MUSB_TXCSR_DMAENAB
 			| MUSB_TXCSR_H_RXSTALL
